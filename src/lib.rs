@@ -2,8 +2,6 @@
 use soroban_sdk::{contractimpl, contracttype, Env, Address, Symbol};
 
 
-const INIT: Symbol = Symbol::short("initialized");
-
 #[contracttype]
 #[derive(Clone)]
 pub enum DataKey {
@@ -30,7 +28,7 @@ impl StakingContract {
         env.storage().set(&DataKey::RewardToken, &reward_token);
         env.storage().set(&DataKey::TokenAdmin, &token_admin);
 
-        env.events().publish((INIT, Symbol::short("staking")), token_admin);
+        env.events().publish((Symbol::short("INIT"), Symbol::short("staking")), token_admin);
     }
 
     pub fn stake(env: Env) {
@@ -44,8 +42,9 @@ impl StakingContract {
     pub fn claim_reward(env: Env) {
 
     }
-
-    pub fn withdraw(env: Env) {
-
-    }
 }
+
+#[cfg(test)]
+mod test;
+
+mod testutils;
