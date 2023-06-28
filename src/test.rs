@@ -15,9 +15,9 @@ fn create_staking_contract() -> (
     env.mock_all_auths();
 
     let id = register_contract(&env);
-    let crowdfund = StakingContract::new(&env, id.clone());
+    let stating_contract = StakingContract::new(&env, id.clone());
 
-    // ARTY token creation
+    // Reward token creation
     let token_admin = Address::random(&env);
     let contract_reward_token = env.register_stellar_asset_contract(token_admin.clone());
     let reward_token = Token::new(&env, &contract_reward_token);
@@ -25,7 +25,7 @@ fn create_staking_contract() -> (
     // Mint some Rewards tokens to work with
     reward_token.mint(&token_admin, &50000);
 
-    let client = crowdfund.client();
+    let client = stating_contract.client();
 
     // initialize the accounts, Reward token and Admin Account
     client.initialize(&contract_reward_token, &token_admin);
@@ -47,6 +47,8 @@ impl Setup {
         let env = contract_client.1;
         let reward_token_client = contract_client.2;
         let reward_token_address = contract_client.3;
+
+        
 
         Self {
             env: env,
