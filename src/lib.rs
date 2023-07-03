@@ -104,8 +104,7 @@ impl StakingContract {
 
         if stake_detail.end_time < current_time {
             Error::PlanNotFinished;
-        } 
-
+        }
 
         let client = token::Client::new(&env.clone(), &token_id);
         client.transfer(
@@ -140,7 +139,7 @@ impl StakingContract {
             reward_amount = 60;
         }
 
-        return  reward_amount;
+        return reward_amount;
     }
 
     fn get_current_time() -> u64 {

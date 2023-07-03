@@ -92,7 +92,7 @@ impl Setup {
             stake_amount,
             plan,
             start_time,
-            end_time
+            end_time,
         }
     }
 }
