@@ -131,28 +131,28 @@ fn test_all_stakes() {
     assert_eq!(contract_balance, detail.total_staked);
 }
 
-// #[test]
-// fn test_all_unstake() {
-//     let setup = Setup::new();
+#[test]
+fn test_all_unstake() {
+    let setup = Setup::new();
 
-//     let stake_detail = StakeDetail {
-//         owner: setup.staker_acc1.clone(),
-//         total_staked: 0,
-//         last_staked: setup.stake_amount,
-//         reward_amount: 0,
-//         plan: setup.plan,
-//         end_time: setup.end_time,
-//     };
+    let stake_detail = StakeDetail {
+        owner: setup.staker_acc1.clone(),
+        total_staked: 0,
+        last_staked: setup.stake_amount,
+        reward_amount: 0,
+        plan: setup.plan,
+        end_time: setup.end_time,
+    };
 
-//     let detail = setup
-//         .client
-//         .unstake(&setup.staker_acc1, &setup.stake_token_address);
-//     assert_eq!(detail, stake_detail);
+    let detail = setup
+        .client
+        .unstake(&setup.staker_acc1, &setup.stake_token_address);
+    assert_eq!(detail, stake_detail);
 
-//     // check the contract address balance
-//     let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
-//     assert_eq!(contract_balance, detail.total_staked);
-// }
+    // check the contract address balance
+    let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
+    assert_eq!(contract_balance, detail.total_staked);
+}
 
 #[test]
 fn test_all_claim_rewards() {

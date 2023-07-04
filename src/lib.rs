@@ -136,10 +136,27 @@ impl StakingContract {
     }
 
     pub fn claim_reward(env: Env, account: Address) -> (StakeDetail, i128) {
-        let data = Self::calculate_reward(env, account).unwrap();
-        let total_reward = data.1;
+        let data = Self::calculate_reward(env.clone(), account.clone()).unwrap();
+        let total_reward = data.1.clone();
+        let mut stake_detail = data.0.clone();
 
-        
+        let reward_token = Self::get_reward_token(env.clone());
+
+        let client = token::Client::new(&env.clone(), &reward_token);
+        client.transfer(
+            &env.current_contract_address(),
+            &stake_detail.owner,
+            &total_reward,
+        );
+
+        stake_detail.owner = env.current_contract_address();
+        stake_detail.total_staked = 0;
+        stake_detail.reward_amount = 0;
+        stake_detail.plan = 0;
+        stake_detail.end_time = 0;
+
+        env.storage().set(&account, &stake_detail);
+
         return data;
     }
 
