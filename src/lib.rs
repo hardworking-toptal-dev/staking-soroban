@@ -135,9 +135,15 @@ impl StakingContract {
         return Ok(stake_detail);
     }
 
-    pub fn claim_reward(env: Env) {}
+    pub fn claim_reward(env: Env, account: Address) -> (StakeDetail, i128) {
+        let data = Self::calculate_reward(env, account).unwrap();
+        let total_reward = data.1;
 
-    pub fn calculate_reward(env: Env, account: Address) -> Result<i128, Error> {
+        
+        return data;
+    }
+
+    fn calculate_reward(env: Env, account: Address) -> Result<(StakeDetail, i128), Error> {
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
 
         if stake_detail.owner == env.current_contract_address() {
@@ -156,7 +162,7 @@ impl StakingContract {
             reward_amount = 60;
         }
 
-        return Ok(reward_amount);
+        return Ok((stake_detail, reward_amount));
     }
 
     fn get_end_time(plan: i128) -> u64 {
