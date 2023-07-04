@@ -49,6 +49,7 @@ struct Setup {
     reward_token_client: Client<'static>,
     reward_token_address: Address,
     stake_token_client: Client<'static>,
+    stake_token_address: Address,
     staker_acc1: Address,
     stake_amount: i128,
     plan: i128,
@@ -65,8 +66,8 @@ impl Setup {
         let reward_token_address = contract_client.3;
         let token_admin = contract_client.4;
 
-        let stake_token_id = env.register_stellar_asset_contract(token_admin.clone());
-        let stake_token_client = Token::new(&env, &stake_token_id);
+        let stake_token_address = env.register_stellar_asset_contract(token_admin.clone());
+        let stake_token_client = Token::new(&env, &stake_token_address);
 
         let stake_amount: i128 = 100;
         let plan = 7;
@@ -75,11 +76,11 @@ impl Setup {
         stake_token_client.mint(&staker_acc1, &1000);
 
         let contract_address = client
-            .stake(&stake_amount, &staker_acc1, &plan, &stake_token_id)
+            .stake(&stake_amount, &staker_acc1, &plan, &stake_token_address)
             .1;
 
         client
-            .stake(&stake_amount, &staker_acc1, &plan, &stake_token_id)
+            .stake(&stake_amount, &staker_acc1, &plan, &stake_token_address)
             .1;
 
         let end_time = get_end_time(plan);
@@ -90,6 +91,7 @@ impl Setup {
             reward_token_client,
             reward_token_address,
             stake_token_client,
+            stake_token_address,
             staker_acc1,
             stake_amount,
             plan,
@@ -136,6 +138,25 @@ fn test_all_stakes() {
 #[test]
 fn test_all_unstake() {
     let setup = Setup::new();
+
+    let stake_detail = StakeDetail {
+        owner: setup.staker_acc1.clone(),
+        total_staked: 0,
+        last_staked: setup.stake_amount,
+        reward_amount: 0,
+        plan: setup.plan,
+        end_time: setup.end_time,
+    };
+
+    
+    let detail =  setup.client.unstake(&setup.staker_acc1, &setup.stake_token_address);
+    assert_eq!(detail, stake_detail);
+
+       // check the contract address balance
+    //    let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
+    //    assert_eq!(contract_balance, detail.total_staked);
+
+
 }
 
 #[test]

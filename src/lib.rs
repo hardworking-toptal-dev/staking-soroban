@@ -65,7 +65,7 @@ impl StakingContract {
     ) -> Result<(StakeDetail, Address), Error> {
         account.require_auth();
 
-        if plan != PLAN1 && plan != PLAN1 && plan != PLAN1 {
+        if plan != PLAN1 && plan != PLAN2 && plan != PLAN3 {
             return Err(Error::PlanNotExist);
         }
 
@@ -101,7 +101,7 @@ impl StakingContract {
         return Ok((stake_detail, env.current_contract_address()));
     }
 
-    pub fn unstake(env: Env, account: Address, token_id: Address) -> Result<i128, Error> {
+    pub fn unstake(env: Env, account: Address, token_id: Address) -> Result<StakeDetail, Error> {
         account.require_auth();
 
         let mut stake_detail = Self::get_stake_detail(env.clone(), account.clone());
@@ -132,7 +132,7 @@ impl StakingContract {
             stake_detail.clone(),
         );
 
-        return Ok(stake_detail.total_staked);
+        return Ok(stake_detail);
     }
 
     pub fn claim_reward(env: Env) {}
