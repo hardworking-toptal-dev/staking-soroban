@@ -74,20 +74,14 @@ impl Setup {
         let staker_acc1 = Address::random(&env);
         stake_token_client.mint(&staker_acc1, &1000);
 
-        let contract_address = client.stake(
-            &stake_amount,
-            &staker_acc1,
-            &plan,
-            &stake_token_id,
-        ).1;
+        let contract_address = client
+            .stake(&stake_amount, &staker_acc1, &plan, &stake_token_id)
+            .1;
 
-        client.stake(
-            &stake_amount,
-            &staker_acc1,
-            &plan,
-            &stake_token_id,
-        ).1;
-        
+        client
+            .stake(&stake_amount, &staker_acc1, &plan, &stake_token_id)
+            .1;
+
         let end_time = get_end_time(plan);
 
         Self {
@@ -126,26 +120,25 @@ fn test_all_stakes() {
         end_time: setup.end_time,
     };
 
+    // check stake detail
     let detail = setup.client.get_stake_detail(&setup.staker_acc1);
-
     assert_eq!(stake_detail, detail);
 
+    // check the calculated reward
     let reward = setup.client.calculate_reward(&setup.staker_acc1);
-
     assert_eq!(reward, 14);
 
+    // check the contract address balance
     let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
-
     assert_eq!(contract_balance, detail.total_staked);
-}
-
-
-#[test]
-fn test_all_claim_rewards() {
-    let setup = Setup::new();
 }
 
 #[test]
 fn test_all_unstake() {
+    let setup = Setup::new();
+}
+
+#[test]
+fn test_all_claim_rewards() {
     let setup = Setup::new();
 }

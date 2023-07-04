@@ -73,7 +73,7 @@ impl StakingContract {
 
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
         let mut total_staked = amount;
-        
+
         if stake_detail.owner == account {
             total_staked = total_staked + stake_detail.total_staked;
         }
@@ -105,7 +105,7 @@ impl StakingContract {
         account.require_auth();
 
         let mut stake_detail = Self::get_stake_detail(env.clone(), account.clone());
-        
+
         if stake_detail.owner == env.current_contract_address() {
             return Err(Error::StakeDetailNotExist);
         }
@@ -139,11 +139,11 @@ impl StakingContract {
 
     pub fn calculate_reward(env: Env, account: Address) -> Result<i128, Error> {
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
-        
+
         if stake_detail.owner == env.current_contract_address() {
             return Err(Error::StakeDetailNotExist);
         }
-        
+
         let plan = stake_detail.plan;
 
         let mut reward_amount = 0;
