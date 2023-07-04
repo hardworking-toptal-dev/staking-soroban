@@ -160,7 +160,6 @@ fn test_all_claim_rewards() {
 
     let data = setup.client.claim_reward(&setup.staker_acc1);
     let total_reward = data.1;
-    let stake_detail = data.0;
 
-    assert_eq!(total_reward, stake_detail.plan + stake_detail.plan)
+    assert_eq!(total_reward, setup.plan + setup.plan)
 }

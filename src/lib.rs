@@ -105,13 +105,11 @@ impl StakingContract {
         account.require_auth();
 
         let mut stake_detail = Self::get_stake_detail(env.clone(), account.clone());
-
         if stake_detail.owner == env.current_contract_address() {
             return Err(Error::StakeDetailNotExist);
         }
 
         let current_time = Self::get_current_time();
-
         if stake_detail.end_time >= current_time {
             return Err(Error::PlanNotFinished);
         }
@@ -137,12 +135,13 @@ impl StakingContract {
 
     pub fn claim_reward(env: Env, account: Address) -> (StakeDetail, i128) {
         let data = Self::calculate_reward(env.clone(), account.clone()).unwrap();
+
         let total_reward = data.1.clone();
         let mut stake_detail = data.0.clone();
 
         let reward_token = Self::get_reward_token(env.clone());
-
         let client = token::Client::new(&env.clone(), &reward_token);
+
         client.transfer(
             &env.current_contract_address(),
             &stake_detail.owner,
@@ -168,7 +167,6 @@ impl StakingContract {
         }
 
         let plan = stake_detail.plan;
-
         let mut reward_amount = 0;
 
         if plan == 7 {
