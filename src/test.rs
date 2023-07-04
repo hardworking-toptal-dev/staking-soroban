@@ -48,10 +48,12 @@ struct Setup {
     client: StakingContractClient<'static>,
     reward_token_client: Client<'static>,
     reward_token_address: Address,
+    stake_token_client: Client<'static>,
     staker_acc1: Address,
     stake_amount: i128,
     plan: i128,
     end_time: u64,
+    contract_address: Address,
 }
 
 impl Setup {
@@ -72,12 +74,20 @@ impl Setup {
         let staker_acc1 = Address::random(&env);
         stake_token_client.mint(&staker_acc1, &1000);
 
+        let contract_address = client.stake(
+            &stake_amount,
+            &staker_acc1,
+            &plan,
+            &stake_token_id,
+        ).1;
+
         client.stake(
             &stake_amount,
             &staker_acc1,
             &plan,
             &stake_token_id,
-        );
+        ).1;
+        
         let end_time = get_end_time(plan);
 
         Self {
@@ -85,10 +95,12 @@ impl Setup {
             client,
             reward_token_client,
             reward_token_address,
+            stake_token_client,
             staker_acc1,
             stake_amount,
             plan,
             end_time,
+            contract_address,
         }
     }
 }
@@ -107,7 +119,7 @@ fn test_all_stakes() {
 
     let stake_detail = StakeDetail {
         owner: setup.staker_acc1.clone(),
-        total_staked: setup.stake_amount,
+        total_staked: setup.stake_amount + setup.stake_amount,
         last_staked: setup.stake_amount,
         reward_amount: 0,
         plan: setup.plan,
@@ -121,7 +133,12 @@ fn test_all_stakes() {
     let reward = setup.client.calculate_reward(&setup.staker_acc1);
 
     assert_eq!(reward, 14);
+
+    let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
+
+    assert_eq!(contract_balance, detail.total_staked);
 }
+
 
 #[test]
 fn test_all_claim_rewards() {

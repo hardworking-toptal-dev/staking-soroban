@@ -62,7 +62,7 @@ impl StakingContract {
         account: Address,
         plan: i128,
         token_id: Address,
-    ) -> Result<StakeDetail, Error> {
+    ) -> Result<(StakeDetail, Address), Error> {
         account.require_auth();
 
         if plan != PLAN1 && plan != PLAN1 && plan != PLAN1 {
@@ -71,9 +71,16 @@ impl StakingContract {
 
         let end_time = Self::get_end_time(plan);
 
+        let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
+        let mut total_staked = amount;
+        
+        if stake_detail.owner == account {
+            total_staked = total_staked + stake_detail.total_staked;
+        }
+
         let stake_detail = StakeDetail {
             owner: account.clone(),
-            total_staked: amount,
+            total_staked: total_staked,
             last_staked: amount,
             reward_amount: 0,
             plan: plan,
@@ -91,13 +98,17 @@ impl StakingContract {
             stake_detail.clone(),
         );
 
-        return Ok(stake_detail);
+        return Ok((stake_detail, env.current_contract_address()));
     }
 
     pub fn unstake(env: Env, account: Address, token_id: Address) -> Result<i128, Error> {
         account.require_auth();
 
-        let mut stake_detail = Self::get_stake_detail(env.clone(), account.clone()).unwrap();
+        let mut stake_detail = Self::get_stake_detail(env.clone(), account.clone());
+        
+        if stake_detail.owner == env.current_contract_address() {
+            return Err(Error::StakeDetailNotExist);
+        }
 
         let current_time = Self::get_current_time();
 
@@ -126,8 +137,13 @@ impl StakingContract {
 
     pub fn claim_reward(env: Env) {}
 
-    pub fn calculate_reward(env: Env, account: Address) -> i128 {
-        let stake_detail = Self::get_stake_detail(env.clone(), account.clone()).unwrap();
+    pub fn calculate_reward(env: Env, account: Address) -> Result<i128, Error> {
+        let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
+        
+        if stake_detail.owner == env.current_contract_address() {
+            return Err(Error::StakeDetailNotExist);
+        }
+        
         let plan = stake_detail.plan;
 
         let mut reward_amount = 0;
@@ -140,7 +156,7 @@ impl StakingContract {
             reward_amount = 60;
         }
 
-        return reward_amount;
+        return Ok(reward_amount);
     }
 
     fn get_end_time(plan: i128) -> u64 {
@@ -161,7 +177,7 @@ impl StakingContract {
         return current_timestamp;
     }
 
-    pub fn get_stake_detail(env: Env, account: Address) -> Result<StakeDetail, Error> {
+    pub fn get_stake_detail(env: Env, account: Address) -> StakeDetail {
         let stake_detail: StakeDetail = env
             .storage()
             .get(&account)
@@ -175,11 +191,7 @@ impl StakingContract {
             }))
             .unwrap();
 
-        if stake_detail.owner == env.current_contract_address() {
-            return Err(Error::StakeDetailNotExist);
-        }
-
-        return Ok(stake_detail);
+        return stake_detail;
     }
 
     pub fn get_reward_token(env: Env) -> Address {
