@@ -6,6 +6,7 @@ use soroban_sdk::token::Client;
 use soroban_sdk::{testutils::Address as _, token::Client as Token, Address, Env};
 
 use crate::StakeDetail;
+use chrono::{Duration, Utc};
 
 fn create_staking_contract() -> (
     StakingContractClient<'static>,
@@ -50,7 +51,6 @@ struct Setup {
     staker_acc1: Address,
     stake_amount: i128,
     plan: i128,
-    start_time: u64,
     end_time: u64,
 }
 
@@ -68,8 +68,6 @@ impl Setup {
 
         let stake_amount: i128 = 100;
         let plan = 7;
-        let start_time = 1688774324;
-        let end_time = 1688249462;
 
         let staker_acc1 = Address::random(&env);
         stake_token_client.mint(&staker_acc1, &1000);
@@ -78,10 +76,9 @@ impl Setup {
             &stake_amount,
             &staker_acc1,
             &plan,
-            &start_time,
-            &end_time,
             &stake_token_id,
         );
+        let end_time = get_end_time(plan);
 
         Self {
             env: env,
@@ -91,10 +88,17 @@ impl Setup {
             staker_acc1,
             stake_amount,
             plan,
-            start_time,
             end_time,
         }
     }
+}
+
+fn get_end_time(plan: i128) -> u64 {
+    let current_time = Utc::now();
+    let end_time = current_time + Duration::days(plan as i64);
+    let end_timestamp = end_time.timestamp() as u64;
+
+    return end_timestamp;
 }
 
 #[test]
@@ -107,7 +111,6 @@ fn test_all_stakes() {
         last_staked: setup.stake_amount,
         reward_amount: 0,
         plan: setup.plan,
-        start_time: setup.start_time,
         end_time: setup.end_time,
     };
 

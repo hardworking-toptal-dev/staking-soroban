@@ -2,6 +2,7 @@
 use soroban_sdk::{contracterror, contractimpl, contracttype, token, Address, Env, Symbol};
 
 extern crate std;
+use chrono::{Duration, Utc};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[contracterror]
@@ -21,7 +22,6 @@ pub struct StakeDetail {
     last_staked: i128,
     reward_amount: i128,
     plan: i128,
-    start_time: u64,
     end_time: u64,
 }
 
@@ -31,6 +31,10 @@ pub enum DataKey {
     RewardToken,
     TokenAdmin,
 }
+
+const PLAN1: i128 = 7;
+const PLAN2: i128 = 14;
+const PLAN3: i128 = 30;
 
 pub struct StakingContract;
 
@@ -57,19 +61,15 @@ impl StakingContract {
         amount: i128,
         account: Address,
         plan: i128,
-        start_time: u64,
-        end_time: u64,
         token_id: Address,
     ) -> Result<StakeDetail, Error> {
         account.require_auth();
 
-        let plan1: i128 = 7;
-        let plan2: i128 = 14;
-        let plan3: i128 = 30;
-
-        if plan != plan1 && plan != plan2 && plan != plan3 {
+        if plan != PLAN1 && plan != PLAN1 && plan != PLAN1 {
             return Err(Error::PlanNotExist);
         }
+
+        let end_time = Self::get_end_time(plan);
 
         let stake_detail = StakeDetail {
             owner: account.clone(),
@@ -77,7 +77,6 @@ impl StakingContract {
             last_staked: amount,
             reward_amount: 0,
             plan: plan,
-            start_time: start_time,
             end_time: end_time,
         };
 
@@ -95,15 +94,15 @@ impl StakingContract {
         return Ok(stake_detail);
     }
 
-    pub fn unstake(env: Env, account: Address, token_id: Address) {
+    pub fn unstake(env: Env, account: Address, token_id: Address) -> Result<i128, Error> {
         account.require_auth();
 
         let mut stake_detail = Self::get_stake_detail(env.clone(), account.clone()).unwrap();
 
         let current_time = Self::get_current_time();
 
-        if stake_detail.end_time < current_time {
-            Error::PlanNotFinished;
+        if stake_detail.end_time >= current_time {
+            return Err(Error::PlanNotFinished);
         }
 
         let client = token::Client::new(&env.clone(), &token_id);
@@ -115,12 +114,14 @@ impl StakingContract {
 
         stake_detail.total_staked = 0;
 
-        env.storage().set(&account, &stake_detail);
+        env.storage().set(&account, &stake_detail.clone());
 
         env.events().publish(
             (Symbol::short("unstake"), Symbol::short("amount")),
-            stake_detail,
+            stake_detail.clone(),
         );
+
+        return Ok(stake_detail.total_staked);
     }
 
     pub fn claim_reward(env: Env) {}
@@ -140,6 +141,14 @@ impl StakingContract {
         }
 
         return reward_amount;
+    }
+
+    fn get_end_time(plan: i128) -> u64 {
+        let current_time = Utc::now();
+        let end_time = current_time + Duration::days(plan as i64);
+        let end_timestamp = end_time.timestamp() as u64;
+
+        return end_timestamp;
     }
 
     fn get_current_time() -> u64 {
@@ -162,7 +171,6 @@ impl StakingContract {
                 last_staked: 0,
                 reward_amount: 0,
                 plan: 0,
-                start_time: 0,
                 end_time: 0,
             }))
             .unwrap();
