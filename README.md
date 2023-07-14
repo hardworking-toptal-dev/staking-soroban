@@ -22,7 +22,8 @@ Run this command in staking-soroban directory
 
 ### Deploy Contract:
 Deploy contract on the Stellar Futurenet
-```soroban contract deploy \
+```
+soroban contract deploy \
     --wasm target/wasm32-unknown-unknown/release/staking_soroban.wasm \
     --source REPLACE_HERE_PRIVATE_KEY \
    --rpc-url https://rpc-futurenet.stellar.org:443 \
