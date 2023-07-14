@@ -27,6 +27,7 @@ soroban contract deploy \
     --wasm target/wasm32-unknown-unknown/release/staking_soroban.wasm \
     --source REPLACE_HERE_PRIVATE_KEY \
    --rpc-url https://rpc-futurenet.stellar.org:443 \
-    --network-passphrase 'Test SDF Future Network ; October 2022'```
+    --network-passphrase 'Test SDF Future Network ; October 2022'
+```
 
 
