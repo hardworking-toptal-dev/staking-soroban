@@ -6,7 +6,7 @@ Allows to stake tokens, unstake, and claim rewards.
 ```cargo install --locked --version 0.8.0 soroban-cli```
 
 ### Clone Project
-```git clone https://github.com/mzaryabrafique/staking-soroban```
+```git clone https://github.com/mzaryabrafique/staking-soroban.git```
 
 ## Run
 
