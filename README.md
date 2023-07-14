@@ -20,3 +20,12 @@ Run this command in staking-soroban directory
 ### Build Release for deployment
 ```cargo build --target wasm32-unknown-unknown --release```
 
+### Deploy Contract:
+Deploy contract on the Stellar Futurenet
+```soroban contract deploy \
+    --wasm target/wasm32-unknown-unknown/release/staking_soroban.wasm \
+    --source REPLACE_HERE_PRIVATE_KEY \
+   --rpc-url https://rpc-futurenet.stellar.org:443 \
+    --network-passphrase 'Test SDF Future Network ; October 2022'```
+
+
