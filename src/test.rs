@@ -26,7 +26,7 @@ fn create_staking_contract() -> (
     let reward_token = Token::new(&env, &contract_reward_token);
 
     // Mint some Rewards tokens to work with
-    reward_token.mint(&token_admin, &50000);
+    reward_token.mint(&id, &50000);
 
     let client = stating_contract.client();
 
@@ -139,35 +139,35 @@ fn test_all_stakes() {
     assert_eq!(contract_balance, detail.total_staked);
 }
 
-// #[test]
-// fn test_all_unstake() {
-//     let setup = Setup::new();
+#[test]
+fn test_all_unstake() {
+    let setup = Setup::new();
 
-//     let stake_detail = StakeDetail {
-//         owner: setup.staker_acc1.clone(),
-//         total_staked: 0,
-//         last_staked: setup.stake_amount,
-//         reward_amount: 0,
-//         plan: setup.plan,
-//         end_time: setup.end_time,
-//     };
+    let stake_detail = StakeDetail {
+        owner: setup.staker_acc1.clone(),
+        total_staked: 0,
+        last_staked: setup.stake_amount,
+        reward_amount: 0,
+        plan: setup.plan,
+        end_time: setup.end_time,
+    };
 
-//     let detail = setup
-//         .client
-//         .unstake(&setup.staker_acc1, &setup.stake_token_address);
-//     assert_eq!(detail, stake_detail);
+    let detail = setup
+        .client
+        .unstake(&setup.staker_acc1, &setup.stake_token_address);
+    assert_eq!(detail, stake_detail);
 
-//     // check the contract address balance
-//     let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
-//     assert_eq!(contract_balance, detail.total_staked);
-// }
+    // check the contract address balance
+    let contract_balance = setup.stake_token_client.balance(&setup.contract_address);
+    assert_eq!(contract_balance, detail.total_staked);
+}
 
-// #[test]
-// fn test_all_claim_rewards() {
-//     let setup = Setup::new();
+#[test]
+fn test_all_claim_rewards() {
+    let setup = Setup::new();
 
-//     let data = setup.client.claim_reward(&setup.staker_acc1);
-//     let total_reward = data.1;
+    let data = setup.client.claim_reward(&setup.staker_acc1);
+    let total_reward = data.1;
 
-//     assert_eq!(total_reward, setup.plan as i128 + setup.plan as i128)
-// }
+    assert_eq!(total_reward, setup.plan as i128 + setup.plan as i128)
+}
