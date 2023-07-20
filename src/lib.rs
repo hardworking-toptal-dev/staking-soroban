@@ -1,10 +1,6 @@
 #![no_std]
 use soroban_sdk::{contracterror, contractimpl, contracttype, token, Address, Env, Symbol};
 
-extern crate std;
-use chrono::{Duration, Utc};
-use std::time::{SystemTime, UNIX_EPOCH};
-
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
@@ -21,7 +17,7 @@ pub struct StakeDetail {
     total_staked: i128,
     last_staked: i128,
     reward_amount: i128,
-    plan: i128,
+    plan: u64,
     end_time: u64,
 }
 
@@ -32,9 +28,9 @@ pub enum DataKey {
     TokenAdmin,
 }
 
-const PLAN1: i128 = 7;
-const PLAN2: i128 = 14;
-const PLAN3: i128 = 30;
+const PLAN1: u64 = 7;
+const PLAN2: u64 = 14;
+const PLAN3: u64 = 30;
 
 pub struct StakingContract;
 
@@ -60,7 +56,7 @@ impl StakingContract {
         env: Env,
         amount: i128,
         account: Address,
-        plan: i128,
+        plan: u64,
         token_id: Address,
     ) -> Result<(StakeDetail, Address), Error> {
         account.require_auth();
@@ -69,7 +65,7 @@ impl StakingContract {
             return Err(Error::PlanNotExist);
         }
 
-        let end_time = Self::get_end_time(plan);
+        let end_time = Self::get_end_time(env.clone(), plan);
 
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
         let mut total_staked = amount;
@@ -109,7 +105,7 @@ impl StakingContract {
             return Err(Error::StakeDetailNotExist);
         }
 
-        let current_time = Self::get_current_time();
+        let current_time = Self::get_current_time(env.clone());
         if stake_detail.end_time >= current_time {
             return Err(Error::PlanNotFinished);
         }
@@ -180,20 +176,19 @@ impl StakingContract {
         return Ok((stake_detail, reward_amount));
     }
 
-    fn get_end_time(plan: i128) -> u64 {
-        let current_time = Utc::now();
-        let end_time = current_time + Duration::days(plan as i64);
-        let end_timestamp = end_time.timestamp() as u64;
+    fn get_end_time(env: Env, plan: u64) -> u64 {
+        let current_timestamp = Self::get_current_time(env);
+
+        let seconds_in_a_day: u64 = 24 * 60 * 60;
+        let plan_days_in_seconds = plan * seconds_in_a_day;
+
+        let end_timestamp = current_timestamp + plan_days_in_seconds;
 
         return end_timestamp;
     }
 
-    fn get_current_time() -> u64 {
-        let current_time = SystemTime::now();
-        let current_timestamp = current_time
-            .duration_since(UNIX_EPOCH)
-            .expect("Failed to get the current timestamp")
-            .as_secs() as u64;
+    fn get_current_time(env: Env) -> u64 {
+        let current_timestamp = env.ledger().timestamp();
 
         return current_timestamp;
     }
