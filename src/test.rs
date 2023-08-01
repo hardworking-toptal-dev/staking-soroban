@@ -1,16 +1,31 @@
 #![cfg(test)]
 
+
+
+use self::token_reward::Contract;
+
 use super::testutils::{register_test_contract as register_contract, StakingContract};
 use super::StakingContractClient;
-use soroban_sdk::token::Client;
-use soroban_sdk::{testutils::Address as _, token::Client as Token, Address, Env};
+use soroban_sdk::token::Client as TokenClient;
+use soroban_sdk::{testutils::Address as _,  Address, Env, IntoVal, BytesN};
+
+mod token_reward {
+    soroban_sdk::contractimport!(file = "token/soroban_token_contract.wasm");
+}
+
 
 use crate::StakeDetail;
 
-fn create_staking_contract() -> (
+fn create_token<'a>(e: &Env, admin: &Address) -> token_reward::Client<'a> {
+    let token = token_reward::Client::new(e, &e.register_contract(None, token_reward {}));
+    token.initialize(admin, &7, &"name".into_val(e), &"symbol".into_val(e));
+    token
+}
+
+fn create_staking_contract<'a>() -> (
     StakingContractClient<'static>,
     Env,
-    Client<'static>,
+    TokenClient<'static>,
     Address,
     Address,
 ) {
@@ -22,11 +37,14 @@ fn create_staking_contract() -> (
 
     // Reward token creation
     let token_admin = Address::random(&env);
-    let contract_reward_token = env.register_stellar_asset_contract(token_admin.clone());
-    let reward_token = Token::new(&env, &contract_reward_token);
+    // let contract_reward_token = env.register_stellar_asset_contract(token_admin.clone());
+    // let reward_token = TokenClient::new(&env, &contract_reward_token);
+
 
     // Mint some Rewards tokens to work with
-    reward_token.mint(&id, &50000);
+    let token = create_token(&env, &token_admin);
+
+    token.mint(&id, &1000);
 
     let client = stating_contract.client();
 
@@ -45,9 +63,9 @@ fn create_staking_contract() -> (
 struct Setup {
     env: Env,
     client: StakingContractClient<'static>,
-    reward_token_client: Client<'static>,
+    reward_token_client: TokenClient<'static>,
     reward_token_address: Address,
-    stake_token_client: Client<'static>,
+    stake_token_client: TokenClient<'static>,
     stake_token_address: Address,
     staker_acc1: Address,
     stake_amount: i128,
@@ -66,7 +84,7 @@ impl Setup {
         let token_admin = contract_client.4;
 
         let stake_token_address = env.register_stellar_asset_contract(token_admin.clone());
-        let stake_token_client = Token::new(&env, &stake_token_address);
+        let stake_token_client = TokenClient::new(&env, &stake_token_address);
 
         let stake_amount: i128 = 100;
         let plan = 7;

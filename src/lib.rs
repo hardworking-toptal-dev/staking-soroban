@@ -1,5 +1,6 @@
 #![no_std]
-use soroban_sdk::{contracterror, contractimpl, contracttype, token, Address, Env, Symbol};
+use soroban_sdk::{contract, contracterror, contractimpl, contracttype, token, symbol_short, Address, Env};
+
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -32,6 +33,7 @@ const PLAN1: u64 = 7;
 const PLAN2: u64 = 14;
 const PLAN3: u64 = 30;
 
+#[contract]
 pub struct StakingContract;
 
 #[contractimpl]
@@ -39,15 +41,15 @@ impl StakingContract {
     pub fn initialize(env: Env, reward_token: Address, token_admin: Address) {
         token_admin.require_auth();
         assert!(
-            !env.storage().has(&DataKey::TokenAdmin),
+            !env.storage().instance().has(&DataKey::TokenAdmin),
             "already initialized"
         );
 
-        env.storage().set(&DataKey::RewardToken, &reward_token);
-        env.storage().set(&DataKey::TokenAdmin, &token_admin);
+        env.storage().instance().set(&DataKey::RewardToken, &reward_token);
+        env.storage().instance().set(&DataKey::TokenAdmin, &token_admin);
 
         env.events().publish(
-            (Symbol::short("INIT"), Symbol::short("staking")),
+            (symbol_short!("INIT"), symbol_short!("staking")),
             token_admin,
         );
     }
@@ -87,10 +89,10 @@ impl StakingContract {
 
         client.transfer(&account, &env.current_contract_address(), &amount);
 
-        env.storage().set(&account, &stake_detail.clone());
+        env.storage().instance().set(&account, &stake_detail.clone());
 
         env.events().publish(
-            (Symbol::short("stake"), Symbol::short("amount")),
+            (symbol_short!("stake"), symbol_short!("amount")),
             stake_detail.clone(),
         );
 
@@ -105,10 +107,10 @@ impl StakingContract {
             return Err(Error::StakeDetailNotExist);
         }
 
-        let current_time = Self::get_current_time(env.clone());
-        if stake_detail.end_time >= current_time {
-            return Err(Error::PlanNotFinished);
-        }
+        // let current_time = Self::get_current_time(env.clone());
+        // if stake_detail.end_time >= current_time {
+        //     return Err(Error::PlanNotFinished);
+        // }
 
         let client = token::Client::new(&env.clone(), &token_id);
         client.transfer(
@@ -119,10 +121,10 @@ impl StakingContract {
 
         stake_detail.total_staked = 0;
 
-        env.storage().set(&account, &stake_detail.clone());
+        env.storage().instance().set(&account, &stake_detail.clone());
 
         env.events().publish(
-            (Symbol::short("unstake"), Symbol::short("amount")),
+            (symbol_short!("unstake"), symbol_short!("amount")),
             stake_detail.clone(),
         );
 
@@ -130,19 +132,23 @@ impl StakingContract {
     }
 
     pub fn claim_reward(env: Env, account: Address) -> (StakeDetail, i128) {
+        account.require_auth();
+
         let data = Self::calculate_reward(env.clone(), account.clone()).unwrap();
 
         let total_reward = data.1.clone();
         let mut stake_detail = data.0.clone();
 
-        let reward_token = Self::get_reward_token(env.clone());
-        let client = token::Client::new(&env.clone(), &reward_token);
+        let reward_token_id = Self::get_reward_token(env.clone());
+        let client_admin = token::Client::new(&env.clone(), &reward_token_id);
 
-        client.transfer(
-            &env.current_contract_address(),
-            &stake_detail.owner,
-            &total_reward,
-        );
+        client_admin.transfer(&env.current_contract_address(), &stake_detail.owner, &total_reward);
+        
+        // client.transfer(
+        //     &env.current_contract_address(),
+        //     &stake_detail.owner,
+        //     &total_reward,
+        // );
 
         stake_detail.owner = env.current_contract_address();
         stake_detail.total_staked = 0;
@@ -150,12 +156,12 @@ impl StakingContract {
         stake_detail.plan = 0;
         stake_detail.end_time = 0;
 
-        env.storage().set(&account, &stake_detail);
+        env.storage().instance().set(&account, &stake_detail);
 
         return data;
     }
 
-    fn calculate_reward(env: Env, account: Address) -> Result<(StakeDetail, i128), Error> {
+    pub fn calculate_reward(env: Env, account: Address) -> Result<(StakeDetail, i128), Error> {
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
 
         if stake_detail.owner == env.current_contract_address() {
@@ -195,27 +201,25 @@ impl StakingContract {
 
     pub fn get_stake_detail(env: Env, account: Address) -> StakeDetail {
         let stake_detail: StakeDetail = env
-            .storage()
+            .storage().instance()
             .get(&account)
-            .unwrap_or(Ok(StakeDetail {
+            .unwrap_or(StakeDetail {
                 owner: env.current_contract_address(),
                 total_staked: 0,
                 last_staked: 0,
                 reward_amount: 0,
                 plan: 0,
                 end_time: 0,
-            }))
-            .unwrap();
+            });
 
         return stake_detail;
     }
 
     pub fn get_reward_token(env: Env) -> Address {
-        env.storage()
-            .get(&DataKey::RewardToken)
+        env.storage().instance().get::<DataKey, Address>(&DataKey::RewardToken)
             .expect("none")
-            .unwrap()
     }
+    
 }
 
 #[cfg(test)]
