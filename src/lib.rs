@@ -1,6 +1,7 @@
 #![no_std]
-use soroban_sdk::{contract, contracterror, contractimpl, contracttype, token, symbol_short, Address, Env};
-
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, Env,
+};
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -45,8 +46,12 @@ impl StakingContract {
             "already initialized"
         );
 
-        env.storage().instance().set(&DataKey::RewardToken, &reward_token);
-        env.storage().instance().set(&DataKey::TokenAdmin, &token_admin);
+        env.storage()
+            .instance()
+            .set(&DataKey::RewardToken, &reward_token);
+        env.storage()
+            .instance()
+            .set(&DataKey::TokenAdmin, &token_admin);
 
         env.events().publish(
             (symbol_short!("INIT"), symbol_short!("staking")),
@@ -89,7 +94,9 @@ impl StakingContract {
 
         client.transfer(&account, &env.current_contract_address(), &amount);
 
-        env.storage().instance().set(&account, &stake_detail.clone());
+        env.storage()
+            .instance()
+            .set(&account, &stake_detail.clone());
 
         env.events().publish(
             (symbol_short!("stake"), symbol_short!("amount")),
@@ -107,10 +114,10 @@ impl StakingContract {
             return Err(Error::StakeDetailNotExist);
         }
 
-        // let current_time = Self::get_current_time(env.clone());
-        // if stake_detail.end_time >= current_time {
-        //     return Err(Error::PlanNotFinished);
-        // }
+        let current_time = Self::get_current_time(env.clone());
+        if stake_detail.end_time >= current_time {
+            return Err(Error::PlanNotFinished);
+        }
 
         let client = token::Client::new(&env.clone(), &token_id);
         client.transfer(
@@ -121,7 +128,9 @@ impl StakingContract {
 
         stake_detail.total_staked = 0;
 
-        env.storage().instance().set(&account, &stake_detail.clone());
+        env.storage()
+            .instance()
+            .set(&account, &stake_detail.clone());
 
         env.events().publish(
             (symbol_short!("unstake"), symbol_short!("amount")),
@@ -142,13 +151,11 @@ impl StakingContract {
         let reward_token_id = Self::get_reward_token(env.clone());
         let client_admin = token::Client::new(&env.clone(), &reward_token_id);
 
-        client_admin.transfer(&env.current_contract_address(), &stake_detail.owner, &total_reward);
-        
-        // client.transfer(
-        //     &env.current_contract_address(),
-        //     &stake_detail.owner,
-        //     &total_reward,
-        // );
+        client_admin.transfer(
+            &env.current_contract_address(),
+            &stake_detail.owner,
+            &total_reward,
+        );
 
         stake_detail.owner = env.current_contract_address();
         stake_detail.total_staked = 0;
@@ -200,26 +207,28 @@ impl StakingContract {
     }
 
     pub fn get_stake_detail(env: Env, account: Address) -> StakeDetail {
-        let stake_detail: StakeDetail = env
-            .storage().instance()
-            .get(&account)
-            .unwrap_or(StakeDetail {
-                owner: env.current_contract_address(),
-                total_staked: 0,
-                last_staked: 0,
-                reward_amount: 0,
-                plan: 0,
-                end_time: 0,
-            });
+        let stake_detail: StakeDetail =
+            env.storage()
+                .instance()
+                .get(&account)
+                .unwrap_or(StakeDetail {
+                    owner: env.current_contract_address(),
+                    total_staked: 0,
+                    last_staked: 0,
+                    reward_amount: 0,
+                    plan: 0,
+                    end_time: 0,
+                });
 
         return stake_detail;
     }
 
     pub fn get_reward_token(env: Env) -> Address {
-        env.storage().instance().get::<DataKey, Address>(&DataKey::RewardToken)
+        env.storage()
+            .instance()
+            .get::<DataKey, Address>(&DataKey::RewardToken)
             .expect("none")
     }
-    
 }
 
 #[cfg(test)]

@@ -20,6 +20,9 @@ pub fn register_test_contract(e: &Env) -> Address {
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
+        min_temp_entry_expiration: 0,
+        min_persistent_entry_expiration: 0,
+        max_entry_expiration: 0,
     });
     e.register_contract(None, crate::StakingContract {})
 }
