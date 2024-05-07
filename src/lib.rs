@@ -10,6 +10,7 @@ pub enum Error {
     StakeDetailNotExist = 1,
     PlanNotExist = 2,
     PlanNotFinished = 3,
+    ZeroStake = 4,
 }
 
 #[contracttype]
@@ -170,6 +171,10 @@ impl StakingContract {
 
     pub fn calculate_reward(env: Env, account: Address) -> Result<(StakeDetail, i128), Error> {
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
+
+        if stake_detail.total_staked == 0{
+            return Err(Error::ZeroStake);
+        }
 
         if stake_detail.owner == env.current_contract_address() {
             return Err(Error::StakeDetailNotExist);
