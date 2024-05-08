@@ -11,6 +11,7 @@ pub enum Error {
     PlanNotExist = 2,
     PlanNotFinished = 3,
     ZeroStake = 4,
+    PlanMustbeSame = 5,
 }
 
 #[contracttype]
@@ -76,6 +77,11 @@ impl StakingContract {
         let end_time = Self::get_end_time(env.clone(), plan);
 
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
+
+        if plan != stake_detail.plan {
+            return Err(Error::PlanMustbeSame);
+        }
+
         let mut total_staked = amount;
 
         if stake_detail.owner == account {
@@ -122,11 +128,13 @@ impl StakingContract {
             return Err(Error::PlanNotFinished);
         }
 
+        let real_total_staked = stake_detail.total_staked*10000000;
+
         let client = token::Client::new(&env.clone(), &token_id);
         client.transfer(
             &env.current_contract_address(),
             &stake_detail.owner,
-            &stake_detail.total_staked,
+            &real_total_staked,
         );
 
         stake_detail.total_staked = 0;
