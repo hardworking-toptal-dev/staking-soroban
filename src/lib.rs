@@ -91,9 +91,11 @@ impl StakingContract {
             end_time: end_time,
         };
 
+        let real_amount = amount*10000000;
+
         let client = token::Client::new(&env.clone(), &token_id);
 
-        client.transfer(&account, &env.current_contract_address(), &amount);
+        client.transfer(&account, &env.current_contract_address(), &real_amount);
 
         env.storage()
             .instance()
