@@ -78,8 +78,10 @@ impl StakingContract {
 
         let stake_detail = Self::get_stake_detail(env.clone(), account.clone());
 
-        if plan != stake_detail.plan {
-            return Err(Error::PlanMustbeSame);
+        if stake_detail.plan != 0 {
+            if plan != stake_detail.plan {
+                return Err(Error::PlanMustbeSame);
+            }
         }
 
         let mut total_staked = amount;
